@@ -14,6 +14,7 @@ HeadNode:
         - 10.install.enginframe.headnode.sh
         - 12.configure.enginframe.alb.headnode.sh
         - 20.install.dcv.slurm.headnode.sh
+        - 40.install.monitoring.headnode.sh
       Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
   Iam:
     AdditionalIamPolicies:
@@ -133,6 +134,7 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
+            - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
@@ -175,6 +177,7 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
+            - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
@@ -218,6 +221,7 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
+            - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
@@ -261,6 +265,7 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
+            - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
@@ -303,6 +308,7 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
+            - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
@@ -358,6 +364,7 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
+            - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
@@ -413,6 +420,7 @@ Scheduling:
             - 04.configure.disable.anacron.compute.sh
             - 25.install.dcv-server.gpu.sh
             - 26.configure.dcv.alb.compute.sh
+            - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
@@ -470,6 +478,7 @@ Scheduling:
             - 04.configure.disable.anacron.compute.sh
             - 25.install.dcv-server.compute.sh
             - 26.configure.dcv.alb.compute.sh
+            - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
