@@ -38,7 +38,7 @@ HeadNode:
   Imds:
     Secured: false
 Image:
-  Os: centos7
+  Os: alinux2
 DirectoryService:
   DomainName: dc=${DC0},dc=${DC1},dc=${DC2}
   DomainAddr: ldaps://${NLB_PUBLIC_DNS_NAME}
