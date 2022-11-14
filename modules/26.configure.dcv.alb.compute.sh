@@ -20,7 +20,7 @@
 
 set -x
 set -e
-exec >/home/centos/dcv_alb.log; exec 2>&1
+
 
 configureDCVforALB() {
     cp '/etc/dcv/dcv.conf' "/etc/dcv/dcv.conf.$(date --iso=s --utc)"

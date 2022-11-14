@@ -23,7 +23,7 @@ EF_NAT_CONF="${NICE_ROOT}/enginframe/conf/plugins/interactive/nat.conf"
 
 set -x
 set -e
-exec >/home/centos/dcv_nat.log; exec 2>&1
+
 
 fixNat() {
     

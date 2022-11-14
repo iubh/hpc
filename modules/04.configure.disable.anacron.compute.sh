@@ -18,7 +18,7 @@
 
 set -x
 set -e
-exec >/home/centos/disable_anacron.log; exec 2>&1
+
 #temporary fix to manually disable Anacron, up until PC handles this.
 disableAnacron() {
     sudo sed 's/^/#/' /etc/anacrontab | sudo tee /etc/anacrontab.tmp

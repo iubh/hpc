@@ -18,7 +18,7 @@
 
 set -x
 set -e
-exec >/home/centos/dcv_server.log; exec 2>&1
+
 
 installSimpleExternalAuth() {
     

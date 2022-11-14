@@ -20,7 +20,7 @@
 
 set -x
 set -e
-exec >/home/centos/dcv_broker.log; exec 2>&1
+
 
 # install DCV Session Broker
 installDCVSessionBroker() {

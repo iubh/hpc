@@ -18,7 +18,6 @@
 
 set -x
 set -e
-exec >/home/centos/slurm_tagging.log; exec 2>&1
 
 configureSACCT() {
     aws s3 cp --quiet "${post_install_base}/scripts/prolog.sh" "${SLURM_ETC}/" --region "${cfn_region}" || exit 1
