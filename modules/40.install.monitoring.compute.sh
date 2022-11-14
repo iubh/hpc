@@ -26,6 +26,7 @@ installPreReq() {
     yum -y -q install docker golang-bin 
     service docker start
     chkconfig docker on
+    groupadd docker
     usermod -a -G docker $cfn_cluster_user
 
     #to be replaced with yum -y install docker-compose as the repository problem is fixed
