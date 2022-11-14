@@ -47,6 +47,12 @@ fi
 
 #install Lustre client
 sudo amazon-linux-extras install -y lustre2.10 > /dev/null 2>&1
+#curl https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-rpm-public-key.asc -o /tmp/fsx-rpm-public-key.asc
+#sudo rpm --import /tmp/fsx-rpm-public-key.asc
+#sudo curl https://fsx-lustre-client-repo.s3.amazonaws.com/el/7/fsx-lustre-client.repo -o /etc/yum.repos.d/aws-fsx.repo
+#uname -r
+#sudo yum clean all
+#sudo yum install -y kmod-lustre-client lustre-client
 
 python3 -m pip install "aws-parallelcluster" --upgrade --user --quiet
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash

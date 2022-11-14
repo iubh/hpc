@@ -26,7 +26,8 @@ set -e
 # ----------------------------------------------------------------------------
 installEnginFrame() {
     
-    amazon-linux-extras install -y java-openjdk11
+    #amazon-linux-extras install -y java-openjdk11
+    yum install java-11-openjdk
     
     wget -nv -P /tmp/packages https://dn3uclhgxk1jt.cloudfront.net/enginframe/packages/enginframe-latest.jar || exit 1
     
@@ -58,13 +59,14 @@ EOF
     # add EnginFrame users if not already exist
     id -u efnobody &>/dev/null || adduser efnobody
 
-    echo "${ec2user_pass}" | passwd ec2-user --stdin
+    echo "${ec2user_pass}" | passwd centos --stdin
 
     if [[ -d "${SHARED_FS_DIR}/nice" ]]; then
         mv  -f "${SHARED_FS_DIR}/nice" "${SHARED_FS_DIR}/nice.$(date "+%d-%m-%Y-%H-%M").BAK"
     fi
     
     # finally, launch EnginFrame installer
+    # Check java version for centos 
     ( cd /tmp/packages
       /usr/lib/jvm/jre-11/bin/java -jar "${enginframe_jar}" --text --batch )
 }
@@ -73,12 +75,12 @@ configureEnginFrameDB(){
     
     #FIXME: use latest link
     wget -nv -P "${EF_ROOT}/WEBAPP/WEB-INF/lib/" https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar
-    chown ec2-user:efnobody "${EF_ROOT}/WEBAPP/WEB-INF/lib/mysql-connector-java-8.0.28.jar"
+    chown centos:efnobody "${EF_ROOT}/WEBAPP/WEB-INF/lib/mysql-connector-java-8.0.28.jar"
 }
 
 customizeEnginFrame() {
     aws s3 cp --quiet "${post_install_base}/enginframe/fm.browse.ui" "${EF_ROOT}/plugins/applications/bin/" --region "${cfn_region}" || exit 1
-    chown ec2-user:efnobody "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
+    chown centos:efnobody "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
     chmod 755 "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
 
     sed -i \
