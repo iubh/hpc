@@ -614,6 +614,7 @@ Resources:
                 - !Sub echo "export POST_INSTALL=\"s3://${Cloud9OutputBucket}/iu-hpc/scripts/post.install.sh\"" >> cluster_env
                 - !Sub sudo -H -u ec2-user bash -c "aws s3 cp --quiet --recursive iu-hpc \"s3://${Cloud9OutputBucket}/iu-hpc\" --region ${AWS::Region}"
                 - chmod -x /home/ec2-user/environment/iu-hpc/scripts/Cloud9-Bootstrap.sh
+                - echo "Bootstrapping started!"
                 - sudo -H -u ec2-user bash -c "bash /home/ec2-user/environment/iu-hpc/scripts/Cloud9-Bootstrap.sh"
 
   Cloud9BootstrapInstanceLambda:
