@@ -27,7 +27,7 @@ set -e
 installEnginFrame() {
     
     #amazon-linux-extras install -y java-openjdk11
-    yum install java-11-openjdk
+    yum -y install java-11-openjdk
     
     wget -nv -P /tmp/packages https://dn3uclhgxk1jt.cloudfront.net/enginframe/packages/enginframe-latest.jar || exit 1
     
