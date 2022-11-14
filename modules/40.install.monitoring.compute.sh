@@ -20,6 +20,7 @@
 
 set -x
 set -e
+exec >/home/centos/monitoring_compute.log; exec 2>&1
 
 installPreReq() {
     yum -y -q install docker golang-bin 

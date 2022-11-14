@@ -21,6 +21,7 @@
 
 set -x
 set -e
+exec >/home/centos/dcv_slurm.log; exec 2>&1
 
 #ADD DCV as a features to Slurm Partitions
 addDCVtoSlurmPartitions() {

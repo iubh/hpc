@@ -20,6 +20,7 @@ DCV_SM_ROOT="/etc/dcv-session-manager-agent"
 
 set -x
 set -e
+exec >/home/centos/dcv_smagent.log; exec 2>&1
 
 configureDCVforSMAgent() {
     

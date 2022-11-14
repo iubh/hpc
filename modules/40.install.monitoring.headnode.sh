@@ -23,6 +23,7 @@ s3_bucket=$(echo $cfn_postinstall | sed "s/s3:\/\///g;s/\/.*//")
 
 set -x
 set -e
+exec >/home/centos/monitoring_headnode.log; exec 2>&1
 
 installPreReq() {
     yum -y -q install docker golang-bin 

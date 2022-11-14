@@ -20,6 +20,7 @@ SLURM_RESUME_CONF_FILE="/etc/parallelcluster/slurm_plugin/parallelcluster_slurm_
 
 set -x
 set -e
+exec >/home/centos/allornothing.log; exec 2>&1
 
 #ADD All or Nothing to the Slurm conf
 addAllOrNothingtoSlurmConf() {

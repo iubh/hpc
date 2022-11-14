@@ -21,6 +21,7 @@
 
 set -x
 set -e
+exec >/home/centos/enginframe.log; exec 2>&1
 
 # install EnginFrame
 # ----------------------------------------------------------------------------
@@ -57,9 +58,9 @@ EOF
 
 
     # add EnginFrame users if not already exist
-    id -u efnobody &>/dev/null || adduser efnobody
+    id -u efnobody &>/dev/null || sudo adduser efnobody
 
-    echo "${ec2user_pass}" | passwd centos --stdin
+    echo "${ec2user_pass}" | sudo passwd centos --stdin
 
     if [[ -d "${SHARED_FS_DIR}/nice" ]]; then
         mv  -f "${SHARED_FS_DIR}/nice" "${SHARED_FS_DIR}/nice.$(date "+%d-%m-%Y-%H-%M").BAK"
@@ -75,13 +76,13 @@ configureEnginFrameDB(){
     
     #FIXME: use latest link
     wget -nv -P "${EF_ROOT}/WEBAPP/WEB-INF/lib/" https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar
-    chown centos:efnobody "${EF_ROOT}/WEBAPP/WEB-INF/lib/mysql-connector-java-8.0.28.jar"
+    sudo chown centos:efnobody "${EF_ROOT}/WEBAPP/WEB-INF/lib/mysql-connector-java-8.0.28.jar"
 }
 
 customizeEnginFrame() {
     aws s3 cp --quiet "${post_install_base}/enginframe/fm.browse.ui" "${EF_ROOT}/plugins/applications/bin/" --region "${cfn_region}" || exit 1
-    chown centos:efnobody "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
-    chmod 755 "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
+    sudo chown centos:efnobody "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
+    sudo chmod 755 "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
 
     sed -i \
         "s/^HY_CONNECT_SESSION_MAX_WAIT=.*$/HY_CONNECT_SESSION_MAX_WAIT='600'/" \

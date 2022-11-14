@@ -18,10 +18,13 @@
 
 set -x
 set -e
+exec >/home/centos/dcv_server.log; exec 2>&1
 
 installSimpleExternalAuth() {
     
     yum -y -q install nice-dcv-*/nice-dcv-simple-external-authenticator-*.rpm
+
+    
     
     systemctl start dcvsimpleextauth.service
 

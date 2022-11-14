@@ -18,6 +18,7 @@
 
 set -x
 set -e
+exec >/home/centos/enfinframe_alb.log; exec 2>&1
 
 configureEF4ALB() {
 
