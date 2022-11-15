@@ -34,6 +34,10 @@ installDCVGLonG4() {
     systemctl isolate multi-user.target
     
     nvidia-xconfig --enable-all-gpus --preserve-busid  --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+    # add  Option         "HardDPMS" "false"
+    sed '/^Section "Device"/a \ \ \ \ Option         "HardDPMS" "false"'  /etc/X11/xorg.conf > /tmp/xorg.conf
+    mv /tmp/xorg.conf /etc/X11/xorg.conf
+    sleep 1
     nvidia-persistenced
     nvidia-smi -ac 5001,1590
                          
