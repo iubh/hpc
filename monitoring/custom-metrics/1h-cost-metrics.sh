@@ -8,13 +8,14 @@
 
 #source the AWS ParallelCluster profile
 . /etc/parallelcluster/cfnconfig
+sudo yum -y -q install cloud-utils
 
 export AWS_DEFAULT_REGION=$cfn_region
 aws_region_long_name=$(python /usr/local/bin/aws-region.py $cfn_region)
 aws_region_long_name=${aws_region_long_name/Europe/EU}
 
-headnodeInstanceType=$(ec2-metadata -t | awk '{print $2}')
-headnodeInstanceId=$(ec2-metadata -i | awk '{print $2}')
+headnodeInstanceType=$(ec2metadata --instance-type | awk '{print $1}')
+headnodeInstanceId=$(ec2metadata --instance-id | awk '{print $1}')
 s3_bucket=$(echo $cfn_postinstall | sed "s/s3:\/\///g;s/\/.*//")
 s3_size_gb=$(echo "$(aws s3api list-objects --bucket $s3_bucket --output json --query "[sum(Contents[].Size)]"| sed -n 2p | tr -d ' ') / 1024 / 1024 / 1024" | bc)
 

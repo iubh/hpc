@@ -63,9 +63,9 @@ installMonitoring(){
 
 
 configureMonitoring() {
-	
+	yum -y -q install cloud-utils
 	fsx_fs_id=$(jq -r '.cluster.fsx_fs_id' "${dna_json}")
-	headnode_instance_id=$(ec2-metadata -i | awk '{print $2}')
+	headnode_instance_id=$(ec2metadata --instance-id | awk '{print $1}')
 
 	#FIXME: the cost dashboard need to be re-designed. 
 	#(crontab -l -u $cfn_cluster_user; echo "*/1 * * * * /usr/local/bin/1m-cost-metrics.sh") | crontab -u $cfn_cluster_user -

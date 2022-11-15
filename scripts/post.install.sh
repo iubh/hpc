@@ -55,7 +55,7 @@ export post_install_url=$(dirname ${cfn_postinstall})
 export post_install_base=$(dirname "${post_install_url}")
 export SLURM_ROOT="/opt/slurm"
 export SLURM_ETC="${SLURM_ROOT}/etc"
-export compute_instance_type=$(ec2-metadata -t | awk '{print $2}')
+export compute_instance_type=$(ec2metadata --instance-type | awk '{print $1}')
 #FIXME: do not hardcode.
 export SHARED_FS_DIR="/fsx"
 export ec2user_home=$(getent passwd | grep centos | sed 's/^.*:.*:.*:.*:.*:\(.*\):.*$/\1/')

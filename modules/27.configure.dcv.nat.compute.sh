@@ -28,9 +28,10 @@ set -e
 fixNat() {
     
     #fix the nat
+    yum -y -q install cloud-utils
     h2="${host_name//./\\.}"
     sed -i "/^${h2} .*$/d" "${EF_NAT_CONF}"
-    echo "$host_name $(ec2-metadata -p| awk '{print $2}')" >> "${EF_NAT_CONF}"
+    echo "$host_name $(ec2metadata --public-hostname| awk '{print $1}')" >> "${EF_NAT_CONF}"
 }
 
 

@@ -61,10 +61,11 @@ installDCVSMAgent() {
 
 
 configureAgentTags() {
+    yum -y -q install cloud-utils
     mkdir -p "${DCV_SM_ROOT}/tags"
-    echo "AWS_EC2_PUBLIC_HOSTNAME=\"$(ec2-metadata -p| awk '{print $2}')\"" >> "${DCV_SM_ROOT}/tags/agent_tags.toml"
-    echo "INSTANCE_TYPE=\"$(ec2-metadata -t| awk '{print $2}')\"" >> "${DCV_SM_ROOT}/tags/agent_tags.toml"
-    echo "AWS_EC2_INSTANCE_ID=\"$(ec2-metadata -i| awk '{print $2}')\"" >> "${DCV_SM_ROOT}/tags/agent_tags.toml"
+    echo "AWS_EC2_PUBLIC_HOSTNAME=\"$(ec2metadata --public-hostname| awk '{print $1}')\"" >> "${DCV_SM_ROOT}/tags/agent_tags.toml"
+    echo "INSTANCE_TYPE=\"$(ec2metadata --instance-type| awk '{print $1}')\"" >> "${DCV_SM_ROOT}/tags/agent_tags.toml"
+    echo "AWS_EC2_INSTANCE_ID=\"$(ec2metadata --instance-id| awk '{print $1}')\"" >> "${DCV_SM_ROOT}/tags/agent_tags.toml"
 }
 
 startServices() {
