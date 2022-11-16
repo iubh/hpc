@@ -420,6 +420,7 @@ Scheduling:
             - 04.configure.disable.anacron.compute.sh
             - 25.install.dcv-server.gpu.sh
             - 26.configure.dcv.alb.compute.sh
+            - 28.configure.allegro.libraries.sh
             - 40.install.monitoring.compute.sh
           Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
       Iam:
