@@ -68,8 +68,8 @@ configureMonitoring() {
 	headnode_instance_id=$(ec2metadata --instance-id | awk '{print $1}')
 
 	#FIXME: the cost dashboard need to be re-designed. 
-	#(crontab -l -u $cfn_cluster_user; echo "*/1 * * * * /usr/local/bin/1m-cost-metrics.sh") | crontab -u $cfn_cluster_user -
-	#(crontab -l -u $cfn_cluster_user; echo "*/60 * * * * /usr/local/bin/1h-cost-metrics.sh") | crontab -u $cfn_cluster_user -  
+	(crontab -l -u $cfn_cluster_user; echo "*/1 * * * * /usr/local/bin/1m-cost-metrics.sh") | crontab -u $cfn_cluster_user -
+	(crontab -l -u $cfn_cluster_user; echo "*/60 * * * * /usr/local/bin/1h-cost-metrics.sh") | crontab -u $cfn_cluster_user -  
 
 	# replace tokens 
 	sed -i "s/_S3_BUCKET_/${s3_bucket}/g"               	"${monitoring_home}/grafana/dashboards/ParallelCluster.json"
