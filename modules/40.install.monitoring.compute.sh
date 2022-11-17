@@ -23,15 +23,27 @@ set -e
 
 
 installPreReq() {
-    yum -y -q install docker golang-bin 
+    
+    sudo yum remove docker \
+                  docker-client \
+                  docker-client-latest \
+                  docker-common \
+                  docker-latest \
+                  docker-latest-logrotate \
+                  docker-logrotate \
+                  docker-engine
+    sudo yum install -y yum-utils
+    sudo yum-config-manager \
+      --add-repo \
+      https://download.docker.com/linux/centos/docker-ce.repo
+    sudo yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin
     service docker start
     chkconfig docker on
-    groupadd docker
     usermod -a -G docker $cfn_cluster_user
 
     #to be replaced with yum -y install docker-compose as the repository problem is fixed
-    curl -s -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+    #curl -s -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    #chmod +x /usr/local/bin/docker-compose
 }
 
 installMonitoring() {
@@ -58,7 +70,7 @@ main() {
     job_id=$($SLURM_ROOT/bin/squeue -h -w "${host_name}" | awk '{print $1}')
     job_comment=$($SLURM_ROOT/bin/scontrol show job $job_id | grep Comment  | sed 's/Comment=//' | sed 's/^ *//g')
     
-    if [[ $job_comment == *"Key=Monitoring,Value=ON"* ]]; then
+    if [[ $job_comment == *"Monitoring=ON"* ]]; then
         installPreReq
         installMonitoring
     fi
