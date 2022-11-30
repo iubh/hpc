@@ -51,22 +51,21 @@ ef.sessions.dir = ${NICE_ROOT}/enginframe/sessions/
 ef.data.root.dir = ${NICE_ROOT}/enginframe/data/
 ef.logs.root.dir = ${NICE_ROOT}/enginframe/logs/
 ef.temp.root.dir = ${NICE_ROOT}/enginframe/tmp/
-kernel.server.tomcat.https.ef.hostname = ${host_name}
+kernel.server.tomcat.https.ef.hostname = ${head_node_hostname}
 kernel.ef.db.admin.password = ${ec2user_pass}
 EOF
 
 
     # add EnginFrame users if not already exist
-    id -u efnobody &>/dev/null || sudo adduser efnobody
+    id -u efnobody &>/dev/null || adduser efnobody
 
-    echo "${ec2user_pass}" | sudo passwd centos --stdin
+    echo "${ec2user_pass}" | passwd ec2-user --stdin
 
     if [[ -d "${SHARED_FS_DIR}/nice" ]]; then
         mv  -f "${SHARED_FS_DIR}/nice" "${SHARED_FS_DIR}/nice.$(date "+%d-%m-%Y-%H-%M").BAK"
     fi
     
     # finally, launch EnginFrame installer
-    # Check java version for centos 
     ( cd /tmp/packages
       /usr/lib/jvm/jre-11/bin/java -jar "${enginframe_jar}" --text --batch )
 }
@@ -75,12 +74,25 @@ configureEnginFrameDB(){
     
     #FIXME: use latest link
     wget -nv -P "${EF_ROOT}/WEBAPP/WEB-INF/lib/" https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar
-    chown centos:efnobody "${EF_ROOT}/WEBAPP/WEB-INF/lib/mysql-connector-java-8.0.28.jar"
+    chown ec2-user:efnobody "${EF_ROOT}/WEBAPP/WEB-INF/lib/mysql-connector-java-8.0.28.jar"
+    
+    aws s3 cp --quiet "${post_install_base}/enginframe/mysql/efdb.config" /tmp/ --region "${cfn_region}" || exit 1
+    aws s3 cp --quiet "${post_install_base}/enginframe/mysql/ef.mysql" /tmp/ --region "${cfn_region}" || exit 1
+    aws s3 cp --quiet "${post_install_base}/enginframe/mysql/mysql" /tmp/ --region "${cfn_region}" || exit 1
+    
+    chown ec2-user:efnobody "/tmp/mysql"
+    chmod +x "/tmp/mysql"
+    
+    export EF_DB_PASS="${ec2user_pass}"
+    /usr/bin/envsubst < efdb.config > efdb.pass.config
+    
+    /tmp/mysql --defaults-extra-file="efdb.pass.config" < "ef.mysql"
+    rm efdb.pass.config efdb.config ef.mysql mysql
 }
 
 customizeEnginFrame() {
     aws s3 cp --quiet "${post_install_base}/enginframe/fm.browse.ui" "${EF_ROOT}/plugins/applications/bin/" --region "${cfn_region}" || exit 1
-    chown centos:efnobody "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
+    chown ec2-user:efnobody "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
     chmod 755 "${EF_ROOT}/plugins/applications/bin/fm.browse.ui"
 
     sed -i \
@@ -100,6 +112,7 @@ startEnginFrame() {
 # ----------------------------------------------------------------------------
 main() {
     echo "[INFO][$(date '+%Y-%m-%d %H:%M:%S')] 10.install.enginframe.headnode.sh: START" >&2
+    export ec2user_pass="$(aws secretsmanager get-secret-value --secret-id "${stack_name}" --query SecretString --output text --region "${cfn_region}")"
     installEnginFrame
     EF_TOP="${NICE_ROOT}/enginframe"
     unset EF_VERSION

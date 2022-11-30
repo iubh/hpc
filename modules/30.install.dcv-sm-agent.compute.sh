@@ -21,7 +21,6 @@ DCV_SM_ROOT="/etc/dcv-session-manager-agent"
 set -x
 set -e
 
-
 configureDCVforSMAgent() {
     
     pattern='\[security\]'
@@ -61,7 +60,7 @@ installDCVSMAgent() {
 
 
 configureAgentTags() {
-    yum -y -q install cloud-utils
+    yum -y -q install cloud-util
     mkdir -p "${DCV_SM_ROOT}/tags"
     echo "AWS_EC2_PUBLIC_HOSTNAME=\"$(ec2metadata --public-hostname| awk '{print $1}')\"" >> "${DCV_SM_ROOT}/tags/agent_tags.toml"
     echo "INSTANCE_TYPE=\"$(ec2metadata --instance-type| awk '{print $1}')\"" >> "${DCV_SM_ROOT}/tags/agent_tags.toml"

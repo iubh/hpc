@@ -19,7 +19,6 @@
 set -x
 set -e
 
-
 configureEF4ALB() {
 
     cat <<-EOF >> ${EF_CONF_ROOT}/plugins/interactive/interactive.efconf
@@ -53,9 +52,9 @@ downloadALBhooks() {
     aws s3 cp --quiet "${post_install_base}/enginframe/alb.session.starting.hook.sh" "${EF_DATA_ROOT}/plugins/interactive/bin/" --region "${cfn_region}" || exit 1
 
     ### FIX: DO NOT TO HARDCODE usernames
-    chown centos:efnobody "${EF_DATA_ROOT}/plugins/interactive/bin/alb.session.closing.hook.sh"
+    chown ec2-user:efnobody "${EF_DATA_ROOT}/plugins/interactive/bin/alb.session.closing.hook.sh"
     chmod +x "${EF_DATA_ROOT}/plugins/interactive/bin/alb.session.closing.hook.sh"
-    chown centos:efnobody "${EF_DATA_ROOT}/plugins/interactive/bin/alb.session.starting.hook.sh"
+    chown ec2-user:efnobody "${EF_DATA_ROOT}/plugins/interactive/bin/alb.session.starting.hook.sh"
     chmod +x "${EF_DATA_ROOT}/plugins/interactive/bin/alb.session.starting.hook.sh"
 }
 

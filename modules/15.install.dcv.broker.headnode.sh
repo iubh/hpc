@@ -21,7 +21,6 @@
 set -x
 set -e
 
-
 # install DCV Session Broker
 installDCVSessionBroker() {
     

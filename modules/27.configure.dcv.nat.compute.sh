@@ -24,7 +24,6 @@ EF_NAT_CONF="${NICE_ROOT}/enginframe/conf/plugins/interactive/nat.conf"
 set -x
 set -e
 
-
 fixNat() {
     
     #fix the nat

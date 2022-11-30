@@ -1,31 +1,35 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: HPC-Networking
 
 Parameters:
   CidrBlock:
     AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
-    Default: 172.19.0.0/16
-    Description: VPC CIDR Block (eg 172.19.0.0/16)
+    Default: 10.3.0.0/16
+    Description: VPC CIDR Block (eg 10.3.0.0/16)
     Type: String
-
   CidrPublicSubnetA:
     AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
-    Default: 172.19.0.0/18
-    Description: VPC CIDR Block for the Public Subnet (eg 172.19.0.0/18)
+    Default: 10.3.128.0/20
+    Description: VPC CIDR Block for the Public Subnet A (eg 10.3.128.0/20)
     Type: String
   CidrPublicSubnetB:
     AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
-    Default: 172.19.64.0/18
-    Description: VPC CIDR Block for the Public Subnet (eg 172.19.64.0/18)
+    Default: 10.3.144.0/20
+    Description: VPC CIDR Block for the Public Subnet B (eg 10.3.144.0/20)
     Type: String
   CidrPrivateSubnetA:
     AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
-    Default: 172.19.128.0/18
-    Description: VPC CIDR Block for the Public Subnet (eg 172.19.128.0/18)
+    Default: 10.3.0.0/18
+    Description: VPC CIDR Block for the Private Subnet A (eg 10.3.1.0/18)
+    Type: String
+  CidrPrivateSubnetB:
+    AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
+    Default: 10.3.64.0/18
+    Description: VPC CIDR Block for the Private Subnet B (eg 10.3.64.0/18)
     Type: String
 
-Mappings: 
-  RegionMap: 
+Mappings:
+  RegionMap:
     us-east-1:
       ZoneId1: use1-az6
       ZoneId2: use1-az4
@@ -67,7 +71,6 @@ Mappings:
       ZoneId2: aps1-az3
 
 Resources:
-
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -76,7 +79,7 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: "Name"
-          Value: !Sub '${AWS::StackName}-HPC-VPC'
+          Value: !Sub "${AWS::StackName}-HPC-VPC"
 
   PublicSubnetA:
     Type: AWS::EC2::Subnet
@@ -86,8 +89,8 @@ Resources:
       AvailabilityZone: !GetAtt AvailabiltyZone1.ZoneName
       MapPublicIpOnLaunch: true
       Tags:
-      - Key: Name
-        Value: !Sub '${AWS::StackName}-Public-SubnetA'
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Public-SubnetA"
 
   PublicSubnetB:
     Type: AWS::EC2::Subnet
@@ -97,32 +100,32 @@ Resources:
       AvailabilityZone: !GetAtt AvailabiltyZone2.ZoneName
       MapPublicIpOnLaunch: true
       Tags:
-      - Key: Name
-        Value: !Sub '${AWS::StackName}-Public-SubnetB'
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Public-SubnetB"
 
-  InternetGatewayA:
+  InternetGateway:
     Type: AWS::EC2::InternetGateway
-    
-  AttachGatewayA:
+
+  AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGatewayA
+      InternetGatewayId: !Ref InternetGateway
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
-      - Key: Name
-        Value: !Sub '${AWS::StackName}-Public-Route-AB'
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Public-Route"
   PublicRoute1:
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGatewayA
-  
+      GatewayId: !Ref InternetGateway
+
   PublicSubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
@@ -143,12 +146,29 @@ Resources:
       CidrBlock: !Ref CidrPrivateSubnetA
       MapPublicIpOnLaunch: false
       Tags:
-      - Key: Name
-        Value: !Sub '${AWS::StackName}-Private-SubnetA'
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Private-SubnetA"
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !GetAtt AvailabiltyZone2.ZoneName
+      CidrBlock: !Ref CidrPrivateSubnetB
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Private-SubnetB"
 
   NatGatewayAEIP:
     Type: AWS::EC2::EIP
-    DependsOn: AttachGatewayA
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+
+  NatGatewayBEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
     Properties:
       Domain: vpc
 
@@ -158,13 +178,27 @@ Resources:
       AllocationId: !GetAtt NatGatewayAEIP.AllocationId
       SubnetId: !Ref PublicSubnetA
 
+  NatGatewayB:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayBEIP.AllocationId
+      SubnetId: !Ref PublicSubnetB
+
   PrivateRouteTableA:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-Route-A'
+          Value: !Sub "${AWS::StackName}-Private-Route-A"
+
+  PrivateRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-Private-Route-B"
 
   DefaultPrivateRouteA:
     Type: AWS::EC2::Route
@@ -173,11 +207,24 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGatewayA
 
+  DefaultPrivateRouteB:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayB
+
   PrivateSubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PrivateRouteTableA
       SubnetId: !Ref PrivateSubnetA
+
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      SubnetId: !Ref PrivateSubnetB
 
   AvailabiltyZone1:
     Type: Custom::AvailabiltyZone
@@ -240,51 +287,52 @@ Resources:
       Path: /
       Description: GetAZLambdaFunction
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action:
               - sts:AssumeRole
             Principal:
               Service:
-                - !Sub 'lambda.${AWS::URLSuffix}'
+                - !Sub "lambda.${AWS::URLSuffix}"
       ManagedPolicyArns:
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
       Policies:
         - PolicyName: GetAZLambdaFunction
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Sid: ec2
                 Effect: Allow
                 Action:
                   - ec2:DescribeAvailabilityZones
                 Resource:
-                  - '*'
+                  - "*"
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-GetAZLambdaFunction
 
   S3Endpoint:
-    Type: 'AWS::EC2::VPCEndpoint'
+    Type: "AWS::EC2::VPCEndpoint"
     Properties:
-      VpcEndpointType: 'Gateway'
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcEndpointType: "Gateway"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
       RouteTableIds:
         - !Ref PublicRouteTable
         - !Ref PrivateRouteTableA
+        - !Ref PrivateRouteTableB
       VpcId: !Ref VPC
 
   localSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-        GroupDescription: Allow all traffic from resources in VPC
-        VpcId:
-          Ref: VPC
-        SecurityGroupIngress:
+      GroupDescription: Allow all traffic from resources in VPC
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
         - IpProtocol: -1
           CidrIp: !Ref CidrBlock
-        SecurityGroupEgress:
+      SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: !Ref CidrBlock
 
@@ -299,6 +347,21 @@ Outputs:
     Value: !Ref PrivateSubnetA
     Export:
       Name: !Sub "${AWS::StackName}-PrivateSubnetA"
+  PrivateSubnetB:
+    Description: The ID of the PrivateSubnetB
+    Value: !Ref PrivateSubnetB
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnetB"
+  PublicSubnetA:
+    Description: The ID of the PublicSubnetA
+    Value: !Ref PublicSubnetA
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnetA"
+  PublicSubnetB:
+    Description: The ID of the PublicSubnetB
+    Value: !Ref PublicSubnetB
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnetB"
   localSG:
     Description: The ID of the localSG
     Value: !Ref localSG

@@ -14,8 +14,6 @@ Metadata:
           - PrivateSubnetAId
           - FSx
           - AD
-          - ADDNS0
-          - ADDNS1
     ParameterLabels:
       AdminPassword:
         default: "Password:"
@@ -31,10 +29,6 @@ Metadata:
         default: "FSx:"
       AD:
         default: "Active Directory:"
-      ADDNS0:
-        default: "Primary DNS IP:"
-      ADDNS1:
-        default: "Secondary DNS IP:"
 
 Parameters:
   AdminPassword:
@@ -64,9 +58,9 @@ Parameters:
     Default: AUTO
 
   PrivateSubnetAId:
-    Description: 'Please, enter the ID of the Private Subnet you wish to use, or put NONE if you want to use only Public Subnets, or just leave "AUTO" if you want to re-use an existing one.'
+    Description: 'Please, enter the ID of the Private Subnet you wish to use, or just leave "AUTO" if you want to re-use an existing one.'
     Type: String
-    AllowedPattern: ^(AUTO|NONE|subnet-[0-9a-z]+)$
+    AllowedPattern: ^(AUTO|subnet-[0-9a-z]+)$
     Default: AUTO
 
   FSx:
@@ -76,85 +70,51 @@ Parameters:
     Default: AUTO
 
   AD:
-    Description: 'Please, enter your Active Directory ID, or just leave "AUTO" if you want to create a new one.'
+    Description: 'Please, enter your ldaps://url of your Active Directory, or just leave "AUTO" if you want to create a new Active Directory. Note: ReadOnlyUser is mandatory'
     Type: String
-    AllowedPattern: ^(AUTO|d-[0-9a-z]+)$
+    AllowedPattern: ^(AUTO|ldaps?://.+)$
     Default: AUTO
-
-  ADDNS0:
-    Description: "Please enter IP of the first DNS server of the custom AD domain"
-    Type: String
-    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})
-    Default: "0.0.0.0"
-
-  ADDNS1:
-    Description: "Please enter IP of the first DNS server of the custom AD domain"
-    Type: String
-    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})
-    Default: "0.0.0.0"
-
-Mappings:
-  RegionMap:
-    us-east-1:
-      ZoneId1: use1-az6
-      ZoneId2: use1-az4
-      DbInstanceType: db.t4g.micro
-    us-east-2:
-      ZoneId1: use2-az2
-      ZoneId2: use2-az3
-      DbInstanceType: db.t4g.micro
-    us-west-1:
-      ZoneId1: usw1-az1
-      ZoneId2: usw1-az3
-      DbInstanceType: db.t4g.micro
-    us-west-2:
-      ZoneId1: usw2-az1
-      ZoneId2: usw2-az2
-      DbInstanceType: db.t4g.micro
-    eu-central-1:
-      ZoneId1: euc1-az3
-      ZoneId2: euc1-az2
-      DbInstanceType: db.t4g.micro
-    eu-west-1:
-      ZoneId1: euw1-az1
-      ZoneId2: euw1-az2
-      DbInstanceType: db.t4g.micro
-    eu-north-1:
-      ZoneId1: eun1-az2
-      ZoneId2: eun1-az1
-      DbInstanceType: db.t4g.micro
-    ca-central-1:
-      ZoneId1: cac1-az2
-      ZoneId2: cac1-az1
-      DbInstanceType: db.t4g.micro
-    eu-south-1:
-      ZoneId1: eus1-az2
-      ZoneId2: eus1-az1
-      DbInstanceType: db.t3.micro
-    ap-east-1:
-      ZoneId1: ape1-az3
-      ZoneId2: ape1-az2
-      DbInstanceType: db.t4g.micro
-    ap-northeast-1:
-      ZoneId1: apne1-az4
-      ZoneId2: apne1-az1
-      DbInstanceType: db.t4g.micro
-    ap-northeast-2:
-      ZoneId1: apne2-az1
-      ZoneId2: apne2-az3
-      DbInstanceType: db.t4g.micro
-    ap-south-1:
-      ZoneId1: aps1-az2
-      ZoneId2: aps1-az3
-      DbInstanceType: db.t4g.micro
 
 Conditions:
   CreateVpc: !Equals [!Ref VpcId, AUTO]
-  CreatePrivateSubnet:
-    !And [!Condition CreateVpc, !Equals [!Ref PrivateSubnetAId, AUTO]]
   CreateAD: !Equals [!Ref AD, AUTO]
 
 Resources:
+  HPCNetworkStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateVpc
+    Properties:
+      TemplateURL: https://enginframe.s3.amazonaws.com/HPC-Networking.yaml
+
+  #lest use privateA , privateA, and privateB
+  #be consistent with parameter names across CF templates
+  HPCADStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateAD
+    Properties:
+      TemplateURL: https://enginframe.s3.amazonaws.com/HPC-AD.yaml
+      Parameters:
+        AdminPassword: !Ref AdminPassword
+        Vpc: !If [CreateVpc, !GetAtt HPCNetworkStack.Outputs.VPC, !Ref VpcId]
+        PrivateSubnetOne:
+          !If [
+            CreateVpc,
+            !GetAtt HPCNetworkStack.Outputs.PrivateSubnetA,
+            !Ref PrivateSubnetAId,
+          ]
+        PublicSubnetOne:
+          !If [
+            CreateVpc,
+            !GetAtt HPCNetworkStack.Outputs.PublicSubnetA,
+            !Ref PublicSubnetAId,
+          ]
+        PublicSubnetTwo:
+          !If [
+            CreateVpc,
+            !GetAtt HPCNetworkStack.Outputs.PublicSubnetB,
+            !Ref PublicSubnetBId,
+          ]
+
   Cloud9Role:
     Type: AWS::IAM::Role
     Properties:
@@ -243,137 +203,11 @@ Resources:
                     ],
                   ]
 
-  VPC:
-    Type: "AWS::EC2::VPC"
-    Condition: CreateVpc
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsHostnames: true
-      EnableDnsSupport: true
-      Tags:
-        - Key: "Name"
-          Value: !Sub "${AWS::StackName}-HPC-VPC"
-
-  PublicSubnetA:
-    Type: AWS::EC2::Subnet
-    Condition: CreateVpc
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.0.0/18
-      AvailabilityZone: !GetAtt AvailabiltyZone1.ZoneName
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-Public-SubnetA"
-
-  PublicSubnetB:
-    Type: AWS::EC2::Subnet
-    Condition: CreateVpc
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.0.64.0/18
-      AvailabilityZone: !GetAtt AvailabiltyZone2.ZoneName
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-Public-SubnetB"
-
-  InternetGatewayA:
-    Type: AWS::EC2::InternetGateway
-    Condition: CreateVpc
-
-  AttachGatewayA:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Condition: CreateVpc
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGatewayA
-
-  PublicRouteTable:
-    Type: AWS::EC2::RouteTable
-    Condition: CreateVpc
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-Public-Route-AB"
-  PublicRoute1:
-    Type: AWS::EC2::Route
-    Condition: CreateVpc
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGatewayA
-
-  PublicSubnetARouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: CreateVpc
-    Properties:
-      SubnetId: !Ref PublicSubnetA
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnetBRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: CreateVpc
-    Properties:
-      SubnetId: !Ref PublicSubnetB
-      RouteTableId: !Ref PublicRouteTable
-
-  PrivateSubnetA:
-    Type: AWS::EC2::Subnet
-    Condition: CreatePrivateSubnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !GetAtt AvailabiltyZone1.ZoneName
-      CidrBlock: 10.0.128.0/18
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-Private-SubnetA"
-
-  NatGatewayAEIP:
-    Type: AWS::EC2::EIP
-    Condition: CreatePrivateSubnet
-    DependsOn: AttachGatewayA
-    Properties:
-      Domain: vpc
-
-  NatGatewayA:
-    Type: AWS::EC2::NatGateway
-    Condition: CreatePrivateSubnet
-    Properties:
-      AllocationId: !GetAtt NatGatewayAEIP.AllocationId
-      SubnetId: !Ref PublicSubnetA
-
-  PrivateRouteTableA:
-    Type: AWS::EC2::RouteTable
-    Condition: CreatePrivateSubnet
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-Private-Route-A"
-
-  DefaultPrivateRouteA:
-    Type: AWS::EC2::Route
-    Condition: CreatePrivateSubnet
-    Properties:
-      RouteTableId: !Ref PrivateRouteTableA
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGatewayA
-
-  PrivateSubnetARouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: CreatePrivateSubnet
-    Properties:
-      RouteTableId: !Ref PrivateRouteTableA
-      SubnetId: !Ref PrivateSubnetA
-
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "Allow https and http"
-      VpcId: !If [CreateVpc, !Ref VPC, !Ref VpcId]
+      VpcId: !If [CreateVpc, !GetAtt HPCNetworkStack.Outputs.VPC, !Ref VpcId]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 443
@@ -388,7 +222,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "Allow 8443 and 80 from the ALB"
-      VpcId: !If [CreateVpc, !Ref VPC, !Ref VpcId]
+      VpcId: !If [CreateVpc, !GetAtt HPCNetworkStack.Outputs.VPC, !Ref VpcId]
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 8443
@@ -407,7 +241,7 @@ Resources:
           ToPort: 389
           SourceSecurityGroupId: !Ref ALBSecurityGroup
 
-  ServerlessDatabaseClusterParameterGroup:
+  DatabaseParameterGroup:
     Type: "AWS::RDS::DBClusterParameterGroup"
     Properties:
       Description: Cluster parameter group for aurora-mysql5.7
@@ -428,19 +262,27 @@ Resources:
     Properties:
       DBSubnetGroupDescription: SubnetGroup
       SubnetIds:
-        - !If [CreateVpc, !Ref PublicSubnetA, !Ref PublicSubnetAId]
-        - !If [CreateVpc, !Ref PublicSubnetB, !Ref PublicSubnetBId]
+        - !If [
+            CreateVpc,
+            !GetAtt HPCNetworkStack.Outputs.PublicSubnetA,
+            !Ref PublicSubnetAId,
+          ]
+        - !If [
+            CreateVpc,
+            !GetAtt HPCNetworkStack.Outputs.PublicSubnetB,
+            !Ref PublicSubnetBId,
+          ]
   SlurmDBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: "Serverless DB SG"
-      VpcId: !If [CreateVpc, !Ref VPC, !Ref VpcId]
+      GroupDescription: "Database SG"
+      VpcId: !If [CreateVpc, !GetAtt HPCNetworkStack.Outputs.VPC, !Ref VpcId]
       SecurityGroupEgress:
         - CidrIp: 0.0.0.0/0
           Description: Allow all outbound traffic by default
           IpProtocol: "-1"
 
-  ServerlessDatabaseClusterSecurityGroupInboundRule:
+  DatabaseSecurityGroupInboundRule:
     Type: "AWS::EC2::SecurityGroupIngress"
     Properties:
       IpProtocol: tcp
@@ -452,45 +294,33 @@ Resources:
         - SlurmDBSecurityGroup
         - GroupId
       SourceSecurityGroupId: !GetAtt
-        - ServerlessClusterDatabaseClientSecurityGroup
+        - DatabaseClientSecurityGroup
         - GroupId
       ToPort: !GetAtt
         - SlurmDB
         - Endpoint.Port
-  SlurmDB:
-    Type: "AWS::RDS::DBCluster"
-    Properties:
-      Engine: aurora-mysql
-      CopyTagsToSnapshot: true
-      DBClusterParameterGroupName: !Ref ServerlessDatabaseClusterParameterGroup
-      DBSubnetGroupName: !Ref SlurmDBSubnetGroup
-      EnableHttpEndpoint: false
-      EngineMode: serverless
-      MasterUsername: "admin"
-      DatabaseName: "EnginFrameDB"
-      MasterUserPassword: !Sub "{{resolve:secretsmanager:${Password}:SecretString:::}}"
-      ScalingConfiguration:
-        AutoPause: true
-        MaxCapacity: 8
-        MinCapacity: 1
-        SecondsUntilAutoPause: 600
-      StorageEncrypted: true
-      Tags:
-        - Key: "parallel-cluster:accounting"
-          Value: database
-        - Key: "parallel-cluster:accounting:scheduler"
-          Value: slurm
-        - Key: "parallel-cluster:accounting:version"
-          Value: "1.0"
-      VpcSecurityGroupIds:
-        - !GetAtt
-          - SlurmDBSecurityGroup
-          - GroupId
 
-  ServerlessClusterDatabaseClientSecurityGroup:
+  SlurmDB:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBInstanceIdentifier: !Sub "${AWS::StackName}-SlurmDB"
+      DBInstanceClass: "db.t4g.micro"
+      MultiAZ: false
+      AllocatedStorage: "20"
+      StorageType: gp3
+      MaxAllocatedStorage: 2000
+      Engine: MySQL
+      EngineVersion: 8.0.28
+      MasterUsername: "admin"
+      MasterUserPassword: !Sub "{{resolve:secretsmanager:${Password}:SecretString:::}}"
+      DBSubnetGroupName: !Ref SlurmDBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref "SlurmDBSecurityGroup"
+
+  DatabaseClientSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: Security Group to allow connection to Serverless DB Cluster
+      GroupDescription: Security Group to allow connection to DB
       Tags:
         - Key: "parallel-cluster:accounting"
           Value: client-security-group
@@ -498,12 +328,12 @@ Resources:
           Value: slurm
         - Key: "parallel-cluster:accounting:version"
           Value: "1.0"
-      VpcId: !If [CreateVpc, !Ref VPC, !Ref VpcId]
-  ServerlessClusterDatabaseClientSecurityGroupOutboundRule:
+      VpcId: !If [CreateVpc, !GetAtt HPCNetworkStack.Outputs.VPC, !Ref VpcId]
+  DatabaseClientSecurityGroupOutboundRule:
     Type: "AWS::EC2::SecurityGroupEgress"
     Properties:
       GroupId: !GetAtt
-        - ServerlessClusterDatabaseClientSecurityGroup
+        - DatabaseClientSecurityGroup
         - GroupId
       IpProtocol: tcp
       Description: Allow incoming connections from PCluster
@@ -528,7 +358,12 @@ Resources:
       AutomaticStopTimeMinutes: 120
       ImageId: amazonlinux-2-x86_64
       InstanceType: c5.xlarge
-      SubnetId: !If [CreateVpc, !Ref PublicSubnetA, !Ref PublicSubnetAId]
+      SubnetId:
+        !If [
+          CreateVpc,
+          !GetAtt HPCNetworkStack.Outputs.PublicSubnetA,
+          !Ref PublicSubnetAId,
+        ]
       Tags:
         - Key: SSMBootstrap
           Value: !Sub
@@ -571,26 +406,17 @@ Resources:
                 - !Sub echo "export S3_BUCKET=${Cloud9OutputBucket}" >> cluster_env
                 - !Sub echo "export FSX_ID=${FSx}" >> cluster_env
                 - !Sub
-                  - echo "export AD_ID=${ADId}" >> cluster_env
-                  - ADId: !If [CreateAD, !Ref ActiveDirectory, !Ref AD]
-                - !Sub
-                  - echo "export CUSTOMAD=${CUSTOMAD}" >> cluster_env
-                  - CUSTOMAD: !If [CreateAD, "false", "true"]
-                - !Sub
-                  - echo "export PUBLIC_SUBNET_ID=${FinalPublicSubnetAId}" >> cluster_env
-                  - FinalPublicSubnetAId:
-                      !If [CreateVpc, !Ref PublicSubnetA, !Ref PublicSubnetAId]
-                - !Sub
                   - echo "export PRIVATE_SUBNET_ID=${FinalPrivateSubnetAId}" >> cluster_env
                   - FinalPrivateSubnetAId:
                       !If [
-                        CreatePrivateSubnet,
-                        !Ref PrivateSubnetA,
+                        CreateVpc,
+                        !GetAtt HPCNetworkStack.Outputs.PrivateSubnetA,
                         !Ref PrivateSubnetAId,
                       ]
                 - !Sub echo "export CLUSTER_NAME=${AWS::StackName}" >> cluster_env
                 - !Sub echo "export ADDITIONAL_SG=${PCAdditionalSecurityGroup}" >> cluster_env
-                - !Sub echo "export DB_SG=${ServerlessClusterDatabaseClientSecurityGroup}" >> cluster_env
+                - !Sub echo "export DB_SG=${DatabaseClientSecurityGroup}" >> cluster_env
+                - !Sub echo "export SECRET_ARN=${Password}" >> cluster_env
                 - !Sub echo "export WAIT_HANDLE='${WaitHandle}'" >> cluster_env
                 - !Sub
                   - echo "export SLURM_DB_ENDPOINT='${DB_ENDPOINT}'" >> cluster_env
@@ -599,8 +425,13 @@ Resources:
                   - echo "export ALB_PUBLIC_DNS_NAME='${ALB}'" >> cluster_env
                   - ALB: !GetAtt ApplicationLoadBalancer.DNSName
                 - !Sub
-                  - echo "export NLB_PUBLIC_DNS_NAME='${NLB}'" >> cluster_env
-                  - NLB: !GetAtt NetworkLoadBalancer.DNSName
+                  - echo "export NLB_PUBLIC_DNS_NAME='${LDAP}'" >> cluster_env
+                  - LDAP:
+                      !If [
+                        CreateAD,
+                        !GetAtt HPCADStack.Outputs.DomainAddrLdaps,
+                        !Ref AD,
+                      ]
                 - !Sub
                   - echo "export KEY_PAIR=\"${AWS::StackName}-${RANDOM}\"" >> cluster_env
                   - RANDOM:
@@ -614,15 +445,20 @@ Resources:
                 - !Sub echo "export POST_INSTALL=\"s3://${Cloud9OutputBucket}/iu-hpc/scripts/post.install.sh\"" >> cluster_env
                 - !Sub sudo -H -u ec2-user bash -c "aws s3 cp --quiet --recursive iu-hpc \"s3://${Cloud9OutputBucket}/iu-hpc\" --region ${AWS::Region}"
                 - chmod -x /home/ec2-user/environment/iu-hpc/scripts/Cloud9-Bootstrap.sh
-                - echo "Bootstrapping started!"
                 - sudo -H -u ec2-user bash -c "bash /home/ec2-user/environment/iu-hpc/scripts/Cloud9-Bootstrap.sh"
+
+  #dummy, just wait if exist otherwise let Cloud9BootstrapInstanceLambda go
+  NLBReady:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Metadata:
+      IsThereNLB: !If [CreateAD, !Ref HPCADStack, NONE]
 
   Cloud9BootstrapInstanceLambda:
     Type: Custom::Cloud9BootstrapInstanceLambda
     DependsOn:
       - LambdaExecutionRole
       - ApplicationLoadBalancer
-      - NetworkLoadBalancer
+      - NLBReady
       - LogGroupCloud9BootstrapInstanceLambdaFunction
     Properties:
       ServiceToken:
@@ -821,29 +657,6 @@ Resources:
         - ""
         - - !GetAtt S3BucketName.OutputString
 
-  S3Endpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Condition: CreateVpc
-    Properties:
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: s3
-            Effect: Allow
-            Principal: "*"
-            Action: s3:*
-            Resource: "*"
-      RouteTableIds:
-        - !Ref PublicRouteTable
-        - !If [
-            CreatePrivateSubnet,
-            !Ref PrivateRouteTableA,
-            !Ref "AWS::NoValue",
-          ]
-      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
-      VpcEndpointType: Gateway
-      VpcId: !Ref VPC
-
   LBInit: # Sets up Application Load Balancer, adding certificates etc.
     Type: Custom::LBInit
     DependsOn:
@@ -964,68 +777,21 @@ Resources:
     Properties:
       Name: !Sub "${AWS::StackName}"
       Subnets:
-        - !If [CreateVpc, !Ref PublicSubnetA, !Ref PublicSubnetAId]
-        - !If [CreateVpc, !Ref PublicSubnetB, !Ref PublicSubnetBId]
+        - !If [
+            CreateVpc,
+            !GetAtt HPCNetworkStack.Outputs.PublicSubnetA,
+            !Ref PublicSubnetAId,
+          ]
+        - !If [
+            CreateVpc,
+            !GetAtt HPCNetworkStack.Outputs.PublicSubnetB,
+            !Ref PublicSubnetBId,
+          ]
       SecurityGroups:
         - !Ref ALBSecurityGroup
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
           Value: 180
-
-  NetworkLoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Scheme: internal
-      Subnets:
-        - !If [CreateVpc, !Ref PublicSubnetA, !Ref PublicSubnetAId]
-        - !If [CreateVpc, !Ref PublicSubnetB, !Ref PublicSubnetBId]
-      Type: network
-
-  LdapTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      Name: !Sub "${AWS::StackName}-Ldap"
-      Port: 389
-      Protocol: TCP
-      VpcId: !If [CreateVpc, !Ref VPC, !Ref VpcId]
-      HealthCheckEnabled: True
-      HealthCheckIntervalSeconds: 10
-      HealthCheckPort: 389
-      HealthCheckProtocol: TCP
-      HealthCheckTimeoutSeconds: 10
-      HealthyThresholdCount: 3
-      TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds
-          Value: 60
-      Targets:
-        - Id:
-            !If [
-              CreateAD,
-              !Select [0, !GetAtt ActiveDirectory.DnsIpAddresses],
-              !Ref ADDNS0,
-            ]
-          Port: 389
-        - Id:
-            !If [
-              CreateAD,
-              !Select [1, !GetAtt ActiveDirectory.DnsIpAddresses],
-              !Ref ADDNS1,
-            ]
-          Port: 389
-      TargetType: ip
-
-  LdapListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref LdapTargetGroup
-      LoadBalancerArn: !Ref NetworkLoadBalancer
-      Port: 636
-      Protocol: TLS
-      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
-      Certificates:
-        - CertificateArn: !GetAtt LBInit.IamCertificateArn
 
   HTTPSListener:
     Type: "AWS::ElasticLoadBalancingV2::Listener"
@@ -1040,32 +806,6 @@ Resources:
         - Order: 1
           TargetGroupArn: !Ref TargetGroupEF
           Type: "forward"
-
-  GrafanaListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref TargetGroupMonitoring
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - "/grafana*"
-      ListenerArn: !Ref HTTPSListener
-      Priority: 1
-
-  PrometheusListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref TargetGroupMonitoring
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - "/prometheus*"
-      ListenerArn: !Ref HTTPSListener
-      Priority: 2
 
   HTTPListener:
     Type: "AWS::ElasticLoadBalancingV2::Listener"
@@ -1090,135 +830,19 @@ Resources:
       - HeadNodeIP
     Properties:
       Name: !Sub "${AWS::StackName}-EF"
-      VpcId: !If [CreateVpc, !Ref VPC, !Ref VpcId]
+      VpcId: !If [CreateVpc, !GetAtt HPCNetworkStack.Outputs.VPC, !Ref VpcId]
       Port: 8443
       Protocol: HTTPS
       Targets:
         - Id: !Sub "${HeadNodeIP.HeadNodePrivateIP}"
       TargetType: ip
 
-  TargetGroupMonitoring:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DependsOn:
-      - HeadNodeIP
-    Properties:
-      Name: !Sub "${AWS::StackName}-Monitoring"
-      VpcId: !If [CreateVpc, !Ref VPC, !Ref VpcId]
-      Port: 80
-      Protocol: HTTP
-      Targets:
-        - Id: !Sub "${HeadNodeIP.HeadNodePrivateIP}"
-      TargetType: ip
-      HealthCheckPath: "/grafana"
-      Matcher:
-        HttpCode: "200,301,302"
-
-  AvailabiltyZone1:
-    Type: Custom::AvailabiltyZone
-    DependsOn: LogGroupGetAZLambdaFunction
-    Properties:
-      ServiceToken: !GetAtt GetAZLambdaFunction.Arn
-      ZoneId: !FindInMap [RegionMap, !Ref "AWS::Region", ZoneId1]
-
-  AvailabiltyZone2:
-    Type: Custom::AvailabiltyZone
-    DependsOn: LogGroupGetAZLambdaFunction
-    Properties:
-      ServiceToken: !GetAtt GetAZLambdaFunction.Arn
-      ZoneId: !FindInMap [RegionMap, !Ref "AWS::Region", ZoneId2]
-
-  LogGroupGetAZLambdaFunction:
-    Type: AWS::Logs::LogGroup
-    DeletionPolicy: Delete
-    Properties:
-      LogGroupName: !Sub /aws/lambda/${GetAZLambdaFunction}
-      RetentionInDays: 7
-
-  GetAZLambdaFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Description: GetAZLambdaFunction
-      Timeout: 60
-      Runtime: python3.7
-      Handler: index.handler
-      Role: !GetAtt GetAZLambdaRole.Arn
-      Code:
-        ZipFile: |
-          import cfnresponse
-          from json import dumps
-          from boto3 import client
-          EC2 = client('ec2')
-          def handler(event, context):
-              if event['RequestType'] in ('Create', 'Update'):
-                  print(dumps(event, default=str))
-                  data = {}
-                  try:
-                      response = EC2.describe_availability_zones(
-                          Filters=[{'Name': 'zone-id', 'Values': [event['ResourceProperties']['ZoneId']]}]
-                      )
-                      print(dumps(response, default=str))
-                      data['ZoneName'] = response['AvailabilityZones'][0]['ZoneName']
-                  except Exception as error:
-                      cfnresponse.send(event, context, cfnresponse.FAILED, {}, reason=error)
-                  finally:
-                      cfnresponse.send(event, context, cfnresponse.SUCCESS, data)
-              else:
-                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
-      Tags:
-        - Key: Name
-          Value: !Sub ${AWS::StackName}-GetAZLambdaFunction
-
-  GetAZLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Path: /
-      Description: GetAZLambdaFunction
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action:
-              - sts:AssumeRole
-            Principal:
-              Service:
-                - !Sub "lambda.${AWS::URLSuffix}"
-      ManagedPolicyArns:
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      Policies:
-        - PolicyName: GetAZLambdaFunction
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: ec2
-                Effect: Allow
-                Action:
-                  - ec2:DescribeAvailabilityZones
-                Resource:
-                  - "*"
-      Tags:
-        - Key: Name
-          Value: !Sub ${AWS::StackName}-GetAZLambdaFunction
-
-  ActiveDirectory: # Create Managed Active Directory (standard) to handle cluster users
-    Type: AWS::DirectoryService::MicrosoftAD
-    Condition: CreateAD
-    Properties:
-      Edition: Standard
-      Name: corp.iu.org
-      Password: !Sub "{{resolve:secretsmanager:${Password}:SecretString:::}}"
-      ShortName: corp
-      VpcSettings:
-        SubnetIds:
-          - !If [CreateVpc, !Ref PublicSubnetA, !Ref PublicSubnetAId]
-          - !If [CreateVpc, !Ref PublicSubnetB, !Ref PublicSubnetBId]
-        VpcId: !If [CreateVpc, !Ref VPC, !Ref VpcId]
-
 Outputs:
   Cloud9URL:
     Description: Cloud9 Environment
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloud9/ide/${Cloud9}"
   WebURL:
-    Description: "EnginFrame HPC Portal and Grafana Monitoring Dashboard."
+    Description: "EnginFrame HPC Portal"
     Value: !Sub
       - "https://${ALB}/"
       - ALB: !GetAtt ApplicationLoadBalancer.DNSName

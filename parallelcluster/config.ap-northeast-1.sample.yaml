@@ -14,16 +14,11 @@ HeadNode:
         - 10.install.enginframe.headnode.sh
         - 12.configure.enginframe.alb.headnode.sh
         - 20.install.dcv.slurm.headnode.sh
-        - 40.install.monitoring.headnode.sh
-      Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+      Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
   Iam:
     AdditionalIamPolicies:
       - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
       - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-      - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-      - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-      - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-      - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
     S3Access:
       - BucketName: '*'
         EnableWriteAccess: true
@@ -33,7 +28,7 @@ HeadNode:
       - ${ADDITIONAL_SG}
       - ${DB_SG}
     ElasticIp: true
-    SubnetId: ${SUBNET_ID}
+    SubnetId: ${PRIVATE_SUBNET_ID}
   Ssh:
     KeyName: ${KEY_PAIR}
   Imds:
@@ -41,10 +36,10 @@ HeadNode:
 Image:
   Os: alinux2
 DirectoryService:
-  DomainName: dc=${DC0},dc=${DC1},dc=${DC2}
-  DomainAddr: ldaps://${NLB_PUBLIC_DNS_NAME}
+  DomainName: dc=corp,dc=pcluster,dc=com
+  DomainAddr: ${NLB_PUBLIC_DNS_NAME}
   PasswordSecretArn: ${SECRET_ARN}
-  DomainReadOnlyUser: cn=ReadOnlyUser,ou=Users,ou=${OU},dc=${DC0},dc=${DC1},dc=${DC2}
+  DomainReadOnlyUser: cn=ReadOnlyUser,ou=Users,ou=CORP,dc=corp,dc=pcluster,dc=com
   LdapTlsReqCert: never
 Region: ${AWS_REGION_NAME}
 Scheduling:
@@ -99,16 +94,9 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -119,8 +107,8 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
     - Name: compute-od-2
       CapacityType: ONDEMAND
       ComputeResources:
@@ -149,16 +137,9 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -169,8 +150,8 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
     - Name: compute-od-3
       CapacityType: ONDEMAND
       ComputeResources:
@@ -193,16 +174,9 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -213,8 +187,8 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
     - Name: compute-od-4
       CapacityType: ONDEMAND
       ComputeResources:
@@ -244,16 +218,9 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -264,8 +231,8 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
     - Name: compute-od-5
       CapacityType: ONDEMAND
       ComputeResources:
@@ -288,16 +255,9 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -308,8 +268,8 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
     - Name: compute-spot-1
       CapacityType: SPOT
       ComputeResources:
@@ -345,16 +305,9 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -365,8 +318,8 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
     - Name: compute-spot-2
       CapacityType: SPOT
       ComputeResources:
@@ -401,16 +354,9 @@ Scheduling:
         OnNodeConfigured:
           Args:
             - 04.configure.disable.anacron.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -421,8 +367,8 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
     - Name: dcv-gpu
       CapacityType: ONDEMAND
       ComputeResources:
@@ -457,16 +403,9 @@ Scheduling:
             - 04.configure.disable.anacron.compute.sh
             - 25.install.dcv-server.gpu.sh
             - 26.configure.dcv.alb.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -477,8 +416,8 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
     - Name: dcv
       CapacityType: ONDEMAND
       ComputeResources:
@@ -515,16 +454,9 @@ Scheduling:
             - 04.configure.disable.anacron.compute.sh
             - 25.install.dcv-server.compute.sh
             - 26.configure.dcv.alb.compute.sh
-            - 40.install.monitoring.compute.sh
-          Script: s3://${S3_BUCKET}/iu-hpc/scripts/post.install.sh
+          Script: s3://${S3_BUCKET}/1click-hpc/scripts/post.install.sh
       Iam:
         AdditionalIamPolicies:
-          - Policy: arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
-          - Policy: arn:aws:iam::aws:policy/SecretsManagerReadWrite
-          - Policy: arn:aws:iam::aws:policy/CloudWatchFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSPriceListServiceFullAccess
-          - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
-          - Policy: arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
           - Policy: arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
         S3Access:
           - BucketName: '*'
@@ -535,14 +467,14 @@ Scheduling:
         PlacementGroup:
           Enabled: true
         SubnetIds:
-          - ${SUBNET_ID}
-        AssignPublicIp: ${USE_PUBLIC_IPS}
+          - ${PRIVATE_SUBNET_ID}
+        AssignPublicIp: false
 SharedStorage:
 ${FSX}
 Tags:
   - Key: EnginFrame
     Value: 'true'
-  - Key: iu-HPC
+  - Key: 1Click-HPC
     Value: 'true'
-  - Key: iu-HPC-version
+  - Key: 1Click-HPC-version
     Value: '0.4'

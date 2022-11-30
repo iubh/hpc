@@ -19,12 +19,9 @@
 set -x
 set -e
 
-
 installSimpleExternalAuth() {
     
     yum -y -q install nice-dcv-*/nice-dcv-simple-external-authenticator-*.rpm
-
-    
     
     systemctl start dcvsimpleextauth.service
 

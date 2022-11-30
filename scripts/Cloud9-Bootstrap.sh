@@ -7,58 +7,20 @@ fi
 set -x
 exec >/home/ec2-user/environment/bootstrap.log; exec 2>&1
 
-sudo yum -y -q install jq sssd realmd oddjob oddjob-mkhomedir adcli samba-common samba-common-tools krb5-workstation openldap-clients policycoreutils-python
+sudo yum -y -q install jq
 sudo chown -R ec2-user:ec2-user /home/ec2-user/
 #source cluster profile and move to the home dir
 cd /home/ec2-user/environment
 . cluster_env
 
-#needed to join the domain
-
-sudo cp /etc/resolv.conf /etc/resolv.conf.ORIG
-IPS=$(aws ds describe-directories --directory-id "${AD_ID}" --query 'DirectoryDescriptions[*].DnsIpAddrs' --output text)
-ADName=$(aws ds describe-directories --directory-id "${AD_ID}" --query 'DirectoryDescriptions[*].Name' --output text)
-export IP_AD1=$(echo "${IPS}" | awk '{print $1}')
-export IP_AD2=$(echo "${IPS}" | awk '{print $2}')
-export DC0=$(echo "${ADName}" | awk -F'.' '{print $1}')
-export DC1=$(echo "${ADName}" | awk -F'.' '{print $2}')
-export DC2=$(echo "${ADName}" | awk -F'.' '{print $3}')
-export OU=${DC0^^}
-
-ADMIN_PW=$(aws secretsmanager get-secret-value --secret-id "hpc-iu-${CLUSTER_NAME}" --query SecretString --output text --region "${AWS_REGION_NAME}")
-export SECRET_ARN=$(aws secretsmanager describe-secret --secret-id "hpc-iu-${CLUSTER_NAME}" --query ARN --output text --region "${AWS_REGION_NAME}")
-echo ";search ${ADName}" | sudo tee -a /etc/resolv.conf
-for IP in ${IPS}
-do
-	echo "${IP} ${ADName}" | sudo tee -a /etc/hosts
-	echo "nameserver ${IP}" | sudo tee -a /etc/resolv.conf
-done
-
-sudo systemctl restart sssd
-
-echo "${ADMIN_PW}" | sudo realm join -U Admin ${ADName}
-
-if [[ $CUSTOMAD == "false" ]];then
-  echo "${ADMIN_PW}" | adcli create-user -x -U Admin --domain=${ADName} --display-name=ReadOnlyUser ReadOnlyUser
-  echo "${ADMIN_PW}" | adcli create-user -x -U Admin --domain=${ADName} --display-name=user000 user000
-  aws ds reset-user-password --directory-id "${AD_ID}" --user-name "ReadOnlyUser" --new-password "${ADMIN_PW}" --region "${AWS_REGION_NAME}"
-  aws ds reset-user-password --directory-id "${AD_ID}" --user-name "user000" --new-password "${ADMIN_PW}" --region "${AWS_REGION_NAME}"
-fi
-
 #install Lustre client
 sudo amazon-linux-extras install -y lustre2.10 > /dev/null 2>&1
-#curl https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-rpm-public-key.asc -o /tmp/fsx-rpm-public-key.asc
-#sudo rpm --import /tmp/fsx-rpm-public-key.asc
-#sudo curl https://fsx-lustre-client-repo.s3.amazonaws.com/el/7/fsx-lustre-client.repo -o /etc/yum.repos.d/aws-fsx.repo
-#uname -r
-#sudo yum clean all
-#sudo yum install -y kmod-lustre-client lustre-client
 
 python3 -m pip install "aws-parallelcluster" --upgrade --user --quiet
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 chmod ug+x ~/.nvm/nvm.sh
 source ~/.nvm/nvm.sh > /dev/null 2>&1
-nvm install --lts=Fermium > /dev/null 2>&1
+nvm install --lts=Gallium > /dev/null 2>&1
 node --version
 
 if [[ $FSX_ID == "AUTO" ]];then
@@ -88,27 +50,19 @@ EOF
 fi
 export FSX
 
-if [[ $PRIVATE_SUBNET_ID == "NONE" ]];then
-  export SUBNET_ID="${PUBLIC_SUBNET_ID}"
-  export USE_PUBLIC_IPS='true'
-  echo "export SUBNET_ID=\"${PUBLIC_SUBNET_ID}\"" >> cluster_env
-  echo "export USE_PUBLIC_IPS='true'" >> cluster_env
-else
-  export SUBNET_ID="${PRIVATE_SUBNET_ID}"
-  export USE_PUBLIC_IPS='false'
-  echo "export SUBNET_ID=\"${PRIVATE_SUBNET_ID}\"" >> cluster_env
-  echo "export USE_PUBLIC_IPS='false'" >> cluster_env
-fi
-
 /usr/bin/envsubst < "iu-hpc/parallelcluster/config.${AWS_REGION_NAME}.sample.yaml" > config.${AWS_REGION_NAME}.yaml
+/usr/bin/envsubst '${SLURM_DB_ENDPOINT}' < "iu-hpc/enginframe/mysql/efdb.config" > efdb.config
 /usr/bin/envsubst '${SLURM_DB_ENDPOINT}' < "iu-hpc/enginframe/efinstall.config" > efinstall.config
 /usr/bin/envsubst '${S3_BUCKET}' < "iu-hpc/enginframe/fm.browse.ui" > fm.browse.ui
 
 aws s3 cp --quiet efinstall.config "s3://${S3_BUCKET}/iu-hpc/enginframe/efinstall.config" --region "${AWS_REGION_NAME}"
 aws s3 cp --quiet fm.browse.ui "s3://${S3_BUCKET}/iu-hpc/enginframe/fm.browse.ui" --region "${AWS_REGION_NAME}"
+aws s3 cp --quiet efdb.config "s3://${S3_BUCKET}/iu-hpc/enginframe/mysql/efdb.config" --region "${AWS_REGION_NAME}"
+aws s3 cp --quiet /usr/bin/mysql "s3://${S3_BUCKET}/iu-hpc/enginframe/mysql/mysql" --region "${AWS_REGION_NAME}"
 rm -f fm.browse.ui efinstall.config
 
 #Create the key pair (remove the existing one if it has the same name)
+# FIX this: create the key on the CF and store on SecretManager
 aws ec2 create-key-pair --key-name ${KEY_PAIR} --query KeyMaterial --output text > /home/ec2-user/.ssh/id_rsa
 if [ $? -ne 0 ]; then
     aws ec2 delete-key-pair --key-name ${KEY_PAIR}

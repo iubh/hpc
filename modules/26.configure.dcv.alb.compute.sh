@@ -21,7 +21,6 @@
 set -x
 set -e
 
-
 configureDCVforALB() {
     yum -y -q install cloud-utils
     cp '/etc/dcv/dcv.conf' "/etc/dcv/dcv.conf.$(date --iso=s --utc)"
