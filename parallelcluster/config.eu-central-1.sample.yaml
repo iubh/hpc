@@ -37,10 +37,10 @@ HeadNode:
 Image:
   Os: centos7
 DirectoryService:
-  DomainName: dc=corp,dc=iu,dc=org
+  DomainName: dc=iu-study,dc=org
   DomainAddr: ${NLB_PUBLIC_DNS_NAME}
   PasswordSecretArn: ${SECRET_ARN}
-  DomainReadOnlyUser: cn=ReadOnlyUser,ou=Users,ou=CORP,dc=corp,dc=iu,dc=org
+  DomainReadOnlyUser: cn=s.aadds.read,ou=Users,dc=iu-study,dc=org
   LdapTlsReqCert: never
 Region: ${AWS_REGION_NAME}
 Scheduling:
