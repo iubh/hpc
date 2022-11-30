@@ -84,7 +84,7 @@ configureEnginFrameDB(){
     chmod +x "/tmp/mysql"
     
     export EF_DB_PASS="${ec2user_pass}"
-    yum install ncurses-libs
+    yum install -y ncurses-libs
     /usr/bin/envsubst < efdb.config > efdb.pass.config
     
     /tmp/mysql --defaults-extra-file="efdb.pass.config" < "ef.mysql"
