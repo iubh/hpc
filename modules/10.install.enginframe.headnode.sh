@@ -84,10 +84,11 @@ configureEnginFrameDB(){
     chmod +x "/tmp/mysql"
     
     export EF_DB_PASS="${ec2user_pass}"
-    yum install -y ncurses-libs
+    yum -y localinstall https://dev.mysql.com/get/mysql80-community-release-el7-7.noarch.rpm
+    sudo yum -y --enablerepo=mysql80-community install mysql-community-server
     /usr/bin/envsubst < efdb.config > efdb.pass.config
     
-    /tmp/mysql --defaults-extra-file="efdb.pass.config" < "ef.mysql"
+    mysql --defaults-extra-file="efdb.pass.config" < "ef.mysql"
     rm efdb.pass.config efdb.config ef.mysql mysql
 }
 
