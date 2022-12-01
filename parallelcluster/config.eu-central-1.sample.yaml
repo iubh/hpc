@@ -9,6 +9,7 @@ HeadNode:
   CustomActions:
     OnNodeConfigured:
       Args:
+        - 02.setup.active-directory.sh
         - 04.configure.slurm.AllOrNothing.headnode.sh
         - 07.configure.slurm.tagging.headnode.sh
         - 10.install.enginframe.headnode.sh
@@ -38,9 +39,10 @@ Image:
 DirectoryService:
   DomainName: dc=iu-study,dc=org
   DomainAddr: ${NLB_PUBLIC_DNS_NAME}
-  PasswordSecretArn: ${SECRET_ARN}
-  DomainReadOnlyUser: cn=s.aadds.read,ou=Users,dc=iu-study,dc=org
-  LdapTlsReqCert: never
+  PasswordSecretArn: arn:aws:secretsmanager:eu-central-1:186419939870:secret:hpc-iu-HPC-AD-IO5iIG
+  DomainReadOnlyUser: cn=s.aadds.read,dc=iu-study,dc=org
+  LdapTlsCaCert: /opt/parallelcluster/shared/directory_service/domain-certificate.crt
+  LdapTlsReqCert: hard
 Region: ${AWS_REGION_NAME}
 Scheduling:
   Scheduler: slurm
