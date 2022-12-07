@@ -105,8 +105,31 @@ customizeEnginFrame() {
     sed '2 i id "${USER}"' -i "${EF_ROOT}/plugins/interactive/lib/remote/linux.jobscript.functions"       
 }
 
+configureApache() {
+    yum -y install httpd mod_auth_mellon openssl mod_ssl
+    mkdir /etc/httpd/mellon
+    # Copy .key,.cert, idp and isp metada into this dir
+    aws s3 cp --quiet "${post_install_base}/enginframe/apache/https_desktop.iu_study.org_.xml" "/etc/httpd/mellon/https_desktop.iu_study.org_.xml" --region "${cfn_region}" || exit 1
+    aws s3 cp --quiet "${post_install_base}/enginframe/apache/https_desktop.iu_study.org_.key" "/etc/httpd/mellon/https_desktop.iu_study.org_.key" --region "${cfn_region}" || exit 1
+    aws s3 cp --quiet "${post_install_base}/enginframe/apache/https_desktop.iu_study.org_.cert" "/etc/httpd/mellon/https_desktop.iu_study.org_.cert" --region "${cfn_region}" || exit 1
+    aws s3 cp --quiet "${post_install_base}/enginframe/apache/https_desktop.iu_study.org_idp_xml" "/etc/httpd/mellon/https_desktop.iu_study.org_idp_xml" --region "${cfn_region}" || exit 1
+
+    chown apache -R /etc/httpd/mellon
+
+    cat >  /etc/httpd/conf.d/httpd-enginframe.conf  << EOF
+    <Location "/enginframe">
+        ProxyPass        ajp://127.0.0.1:8009/enginframe flushpackets=on
+        ProxyPassReverse ajp://127.0.0.1:8009/enginframe
+    </Location>
+EOF
+
+    aws s3 cp --quiet "${post_install_base}/enginframe/apache/server.xml" "${EF_CONF_ROOT}/tomcat/conf/server.xml" --region "${cfn_region}" || exit 1
+}
+
 startEnginFrame() {
   systemctl start enginframe
+  systemctl restart httpd
+  systemctl restart enginframe
 }
 
 
@@ -122,6 +145,7 @@ main() {
     export EF_ROOT="${EF_TOP}/${EF_VERSION}/enginframe"
     customizeEnginFrame
     configureEnginFrameDB
+    configureApache
     startEnginFrame
     echo "[INFO][$(date '+%Y-%m-%d %H:%M:%S')] 10.install.enginframe.headnode.sh: STOP" >&2
 }

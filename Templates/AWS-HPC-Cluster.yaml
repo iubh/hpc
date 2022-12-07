@@ -233,6 +233,10 @@ Resources:
           ToPort: 80
           SourceSecurityGroupId: !Ref ALBSecurityGroup
         - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+        - IpProtocol: tcp
           FromPort: 389
           ToPort: 389
           SourceSecurityGroupId: !Ref ALBSecurityGroup
@@ -831,7 +835,7 @@ Resources:
     Properties:
       Name: !Sub "${AWS::StackName}-EF"
       VpcId: !If [CreateVpc, !GetAtt HPCNetworkStack.Outputs.VPC, !Ref VpcId]
-      Port: 8443
+      Port: 443
       Protocol: HTTPS
       Targets:
         - Id: !Sub "${HeadNodeIP.HeadNodePrivateIP}"

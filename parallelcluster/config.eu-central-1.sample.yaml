@@ -40,7 +40,7 @@ DirectoryService:
   DomainName: dc=iu-study,dc=org
   DomainAddr: ${NLB_PUBLIC_DNS_NAME}
   PasswordSecretArn: arn:aws:secretsmanager:eu-central-1:186419939870:secret:hpc-iu-HPC-AD-IO5iIG
-  DomainReadOnlyUser: cn=s.aadds.read,dc=iu-study,dc=org
+  DomainReadOnlyUser: CN=aadds\, read ServiceAccount,OU=AADDC Users,DC=iu-study,DC=org
   LdapTlsCaCert: /opt/parallelcluster/shared/directory_service/domain-certificate.crt
   LdapTlsReqCert: hard
 Region: ${AWS_REGION_NAME}
