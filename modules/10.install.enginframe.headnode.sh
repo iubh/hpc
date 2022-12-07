@@ -124,6 +124,7 @@ configureApache() {
 EOF
 
     aws s3 cp --quiet "${post_install_base}/enginframe/apache/server.xml" "${EF_CONF_ROOT}/tomcat/conf/server.xml" --region "${cfn_region}" || exit 1
+    aws s3 cp --quiet "${post_install_base}/enginframe/apache/auth_mellon.conf" "/etc/httpd/conf.d/auth_mellon.conf" --region "${cfn_region}" || exit 1
 }
 
 startEnginFrame() {
