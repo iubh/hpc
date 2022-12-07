@@ -146,7 +146,7 @@ main() {
     sleep 10
 
     # set output variables
-    export INTERACTIVE_SESSION_TARGET_HOST="${_alb_host}"
+    export INTERACTIVE_SESSION_TARGET_HOST="desktop.iu-study.org"
     export INTERACTIVE_SESSION_TARGET_PORT="${_alb_port}"
     export INTERACTIVE_SESSION_TARGET_WEBURLPATH="${_target_web_url_path}"
 }
