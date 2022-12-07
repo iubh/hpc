@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<EntityDescriptor
+ entityID="https://desktop.iu-study.org/"
+ xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+ <SPSSODescriptor
+   AuthnRequestsSigned="true"
+   WantAssertionsSigned="true"
+   protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+   <KeyDescriptor use="signing">
+     <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+       <ds:X509Data>
+         <ds:X509Certificate>MIICujCCAaICCQDE/xLrru+KYzANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRk
+ZXNrdG9wLml1LXN0dWR5Lm9yZzAeFw0yMjEyMDYxMjU3NDlaFw0zMjEyMDUxMjU3
+NDlaMB8xHTAbBgNVBAMMFGRlc2t0b3AuaXUtc3R1ZHkub3JnMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEArRtbEzWY7gPbFfAacEETEt0BRspQFuCdg/XV
+wtGXM8NKmWZrRnLETSdg8xUUrxxCvUfzaKWaiD4xZ/963TI7e/oavyPEYZbXoyK0
+B1BwMVJkppzm42FFNed+ZCR/78+90t8vriMqxeOWnhtTOLQ1IyclGp0NUUh47oCh
+SiCMx31MGSolNZ7XfR30xgqR8x48qVk2a5l+YiFj3ajTdzD5A2GtAGFLGPt2iMUB
+zhewO19x/YuS5/8fOg9t7P9pBJ3XIwFP5+m49CGEJAEAcKVFCMT1hf/hkw2EdA8L
+p63GsE0yaXdX7mgplHNCcKjs8UTqsOHZJXApxyS2GXPFuup3wQIDAQABMA0GCSqG
+SIb3DQEBCwUAA4IBAQCLc3LyQe0oO+SGOgXEdhm+5Z/L0RIGT8h30f9NzvYJZjTV
+bMbOfqy2uMb8B9aDfuHLY+rTsmib/gZjvJ/9x0m8MLObi4S+BXCSjf88419vipz/
+FL/H01iUDJcNa8WHx25vKB5YNjCQPsMDBIlIuPvBT556ESfo1gYY39oIq8YrW9Qw
+KwsG0rd7fxCTRlrDvM3InvJPGu6HSAZRaOzwxvmS1CIvnZfSgoMCqj7iKsJUMMwJ
+W6ovVY2O5d1RsxbNpSUiI5696Uv6EzDCV/cvDinHvVhwUNGIfOQOCNskuzd0DtD2
+KwuGWsHqyKda1sr9hj+CMtfdEDjOSHuRbCqFwEJX</ds:X509Certificate>
+       </ds:X509Data>
+     </ds:KeyInfo>
+   </KeyDescriptor>
+   <KeyDescriptor use="encryption">
+     <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+       <ds:X509Data>
+         <ds:X509Certificate>MIICujCCAaICCQDE/xLrru+KYzANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRk
+ZXNrdG9wLml1LXN0dWR5Lm9yZzAeFw0yMjEyMDYxMjU3NDlaFw0zMjEyMDUxMjU3
+NDlaMB8xHTAbBgNVBAMMFGRlc2t0b3AuaXUtc3R1ZHkub3JnMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEArRtbEzWY7gPbFfAacEETEt0BRspQFuCdg/XV
+wtGXM8NKmWZrRnLETSdg8xUUrxxCvUfzaKWaiD4xZ/963TI7e/oavyPEYZbXoyK0
+B1BwMVJkppzm42FFNed+ZCR/78+90t8vriMqxeOWnhtTOLQ1IyclGp0NUUh47oCh
+SiCMx31MGSolNZ7XfR30xgqR8x48qVk2a5l+YiFj3ajTdzD5A2GtAGFLGPt2iMUB
+zhewO19x/YuS5/8fOg9t7P9pBJ3XIwFP5+m49CGEJAEAcKVFCMT1hf/hkw2EdA8L
+p63GsE0yaXdX7mgplHNCcKjs8UTqsOHZJXApxyS2GXPFuup3wQIDAQABMA0GCSqG
+SIb3DQEBCwUAA4IBAQCLc3LyQe0oO+SGOgXEdhm+5Z/L0RIGT8h30f9NzvYJZjTV
+bMbOfqy2uMb8B9aDfuHLY+rTsmib/gZjvJ/9x0m8MLObi4S+BXCSjf88419vipz/
+FL/H01iUDJcNa8WHx25vKB5YNjCQPsMDBIlIuPvBT556ESfo1gYY39oIq8YrW9Qw
+KwsG0rd7fxCTRlrDvM3InvJPGu6HSAZRaOzwxvmS1CIvnZfSgoMCqj7iKsJUMMwJ
+W6ovVY2O5d1RsxbNpSUiI5696Uv6EzDCV/cvDinHvVhwUNGIfOQOCNskuzd0DtD2
+KwuGWsHqyKda1sr9hj+CMtfdEDjOSHuRbCqFwEJX</ds:X509Certificate>
+       </ds:X509Data>
+     </ds:KeyInfo>
+   </KeyDescriptor>
+   <SingleLogoutService
+     Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
+     Location="https://desktop.iu-study.org/mellon/logout" />
+   <SingleLogoutService
+     Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+     Location="https://desktop.iu-study.org/mellon/logout" />
+   <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
+   <AssertionConsumerService
+     index="0"
+     isDefault="true"
+     Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+     Location="https://desktop.iu-study.org/mellon/postResponse" />
+   <AssertionConsumerService
+     index="1"
+     Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact"
+     Location="https://desktop.iu-study.org/mellon/artifactResponse" />
+   <AssertionConsumerService
+     index="2"
+     Binding="urn:oasis:names:tc:SAML:2.0:bindings:PAOS"
+     Location="https://desktop.iu-study.org/mellon/paosResponse" />
+ </SPSSODescriptor>
+</EntityDescriptor>
