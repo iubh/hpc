@@ -114,6 +114,8 @@ configureApache() {
     aws s3 cp --quiet "${post_install_base}/enginframe/apache/https_desktop.iu_study.org_.cert" "/etc/httpd/mellon/https_desktop.iu_study.org_.cert" --region "${cfn_region}" || exit 1
     aws s3 cp --quiet "${post_install_base}/enginframe/apache/https_desktop.iu_study.org_idp_xml" "/etc/httpd/mellon/https_desktop.iu_study.org_idp_xml" --region "${cfn_region}" || exit 1
 
+    aws s3 cp --quiet "${post_install_base}/enginframe/monitoring/www/*" "/var/www/html/" --region "${cfn_region}" || exit 1
+    
     chown apache -R /etc/httpd/mellon
 
     cat >  /etc/httpd/conf.d/httpd-enginframe.conf  << EOF

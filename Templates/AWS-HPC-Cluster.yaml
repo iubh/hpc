@@ -13,6 +13,7 @@ Metadata:
           - PublicSubnetBId
           - PrivateSubnetAId
           - FSx
+          - EFS
           - AD
     ParameterLabels:
       AdminPassword:
@@ -27,6 +28,8 @@ Metadata:
         default: "Private Subnet:"
       FSx:
         default: "FSx:"
+      EFS:
+        default: "EFS::"
       AD:
         default: "Active Directory:"
 
@@ -65,6 +68,11 @@ Parameters:
 
   FSx:
     Description: 'Please, enter your FSx ID, or just leave "AUTO" if you want to re-use an existing one.'
+    Type: String
+    AllowedPattern: ^(AUTO|fs-[0-9a-z]+)$
+    Default: AUTO
+  EFS:
+    Description: 'Please, enter your EFS ID, or just leave "AUTO" if you want to re-use an existing one.'
     Type: String
     AllowedPattern: ^(AUTO|fs-[0-9a-z]+)$
     Default: AUTO
@@ -409,6 +417,7 @@ Resources:
                 - !Sub echo "export AWS_REGION_NAME=${AWS::Region}" >> cluster_env
                 - !Sub echo "export S3_BUCKET=${Cloud9OutputBucket}" >> cluster_env
                 - !Sub echo "export FSX_ID=${FSx}" >> cluster_env
+                - !Sub echo "export EFS_ID=${EFS}" >> cluster_env
                 - !Sub
                   - echo "export PRIVATE_SUBNET_ID=${FinalPrivateSubnetAId}" >> cluster_env
                   - FinalPrivateSubnetAId:

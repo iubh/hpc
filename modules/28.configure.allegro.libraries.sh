@@ -4,7 +4,7 @@ set -x
 set -e
 
 setupLibraries() {
-    yum install -y -q libXss.so.1 libXScrnSaver elfutils-libelf.i686 redhat-lsb.i686 mesa-libGLU.i686 motif.i686 || exit 1
+    yum install -y -q libXss.so.1 libXScrnSaver elfutils-libelf.i686 redhat-lsb.i686 mesa-libGLU.i686 motif.i686 firefox || exit 1
 }
 
 setupLicenceServer() {

@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: HPC-EFS-Storage
+
+Parameters:
+  PrivateSubnet:
+    Description: The ID of your private subnet.
+    Type: String
+    AllowedPattern: ^(subnet-[0-9a-z]+)$
+  SecurityGroup:
+    Description: The ID of the SecurityGroup you want to attach.
+    Type: String
+    AllowedPattern: ^(sg-[0-9a-z]+)$
+
+Resources:
+  FSx:
+    Type: "AWS::EFS::FileSystem"
+    Properties:
+      BackupPolicy:
+        Status: DISABLED
+      PerformanceMode: maxIO
+      Encrypted: true
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_30_DAYS
+        - TransitionToPrimaryStorageClass: AFTER_1_ACCESS
+      FileSystemTags:
+        - Key: app
+          Value: cadence
+
+  MountTargetResource:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FSx
+      SubnetId: !Ref PrivateSubnet
+      SecurityGroups:
+        - !Ref SecurityGroup
+
+  AccessPointResource:
+    Type: "AWS::EFS::AccessPoint"
+    Properties:
+      FileSystemId: !Ref FSx
+      PosixUser:
+        Uid: "1000"
+        Gid: "1000"
+        SecondaryGids:
+          - "1000"
+          - "1001"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "1000"
+          OwnerUid: "1000"
+          Permissions: "0755"
+        Path: "/parallel_cluster/enginframe"
